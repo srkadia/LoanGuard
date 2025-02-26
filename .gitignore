@@ -170,3 +170,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Scrap Files
+scrap/
+scrap.*
