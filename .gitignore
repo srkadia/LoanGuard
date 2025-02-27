@@ -174,3 +174,5 @@ cython_debug/
 # Scrap Files
 scrap/
 scrap.*
+catboost_info
+artifacts
