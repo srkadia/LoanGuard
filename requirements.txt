@@ -9,4 +9,6 @@ xgboost
 lightgbm
 catboost
 tensorflow
+keras
+keras-tuner
 # -e .
