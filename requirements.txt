@@ -8,7 +8,6 @@ scikit-learn
 xgboost
 lightgbm
 catboost
-tensorflow
-keras
+tensorflow==2.10.1
 keras-tuner
 # -e .
