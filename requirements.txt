@@ -10,4 +10,5 @@ lightgbm
 catboost
 tensorflow-gpu==2.10.1
 keras-tuner
+pyyaml
 -e .

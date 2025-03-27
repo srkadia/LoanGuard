@@ -8,7 +8,7 @@ class Logger:
     This class ensures logging is set up with both file and console handlers.
     """
     
-    LOG_DIR = "logs"
+    LOG_DIR = os.path.join('logs')
     os.makedirs(LOG_DIR, exist_ok=True)
     
     def __init__(self, name: str, log_level=logging.DEBUG, file_logging=True):

@@ -176,3 +176,6 @@ scrap/
 scrap.*
 catboost_info
 artifacts
+
+# Ignore Files
+*_gitignore.*

@@ -1,5 +1,3 @@
-import os
-import sys
 import pandas as pd
 from abc import ABC, abstractmethod
 from utils.logger import Logger
@@ -38,7 +36,7 @@ class CSVDataIngestor(DataIngestor):
             logger.info(f"Successfully loaded data from {file_path}")
             return df
         except Exception as e:
-            raise CustomException(e, sys)
+            raise CustomException(e)
 
 
 # Implement a Factory to create DataIngestors
@@ -58,7 +56,7 @@ class DataIngestorFactory:
             else:
                 raise ValueError(f"No ingestor available for file extension: {file_extension}")
         except Exception as e:
-            raise CustomException(e, sys)
+            raise CustomException(e)
 
 
 # Example usage
@@ -85,5 +83,5 @@ if __name__ == "__main__":
 
     #     logger.info("Data ingestion and processing completed successfully.")
     # except Exception as e:
-    #     raise CustomException(e, sys)
+    #     raise CustomException(e)
     pass
