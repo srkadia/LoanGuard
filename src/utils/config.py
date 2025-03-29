@@ -2,28 +2,35 @@ import os
 import yaml
 from utils.exception import CustomException
 
-# Get absolute path of config.yaml
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Get the directory of config.py
-CONFIG_PATH = os.path.join(BASE_DIR, "..", "config", "config.yaml")
 
-def load_config(config_path=CONFIG_PATH):
+class ConfigLoader:
     """
-    Load configuration settings from a YAML file.
-    :param config_path: Path to the YAML configuration file.
-    :return: Dictionary containing configuration settings.
+    Utility class to load YAML configuration files dynamically from the config directory.
     """
-    try:
-        if not os.path.exists(config_path):
-            raise CustomException(f"Configuration file not found: {config_path}")
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    CONFIG_DIR = os.path.join(BASE_DIR, "..", "config")
 
-        with open(config_path, "r") as file:
-            return yaml.safe_load(file)
+    @staticmethod
+    def load_config(filename: str):
+        """
+        Load a YAML configuration file from the config directory.
 
-    except Exception as e:
-        raise CustomException(e)
+        :param filename: Name of the YAML file to load (e.g., 'config.yaml').
+        :return: Dictionary containing configuration settings.
+        """
+        config_path = os.path.join(ConfigLoader.CONFIG_DIR, filename)
 
-# Debugging - Check if path resolves correctly
+        try:
+            if not os.path.exists(config_path):
+                raise CustomException(f"Configuration file not found: {config_path}")
+
+            with open(config_path, "r") as file:
+                return yaml.safe_load(file)
+
+        except Exception as e:
+            raise CustomException(f"Error loading {filename}: {str(e)}")
+
+# Example Usage
 # if __name__ == "__main__":
-#     print(f"Loading config from: {CONFIG_PATH}")
-#     config = load_config()
-#     print(config)  # Print to verify contents
+#     config = ConfigLoader.load_config("config.yaml")
+#     print(config, params, sep='\n')

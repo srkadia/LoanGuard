@@ -50,3 +50,11 @@ columns_to_drop_additional:
 strategies:
   - simple
   - stratified
+
+target_column: loan_status
+
+model_type:
+  - lightgbm
+  - ann
+
+tune_hyperparameters: True

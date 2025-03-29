@@ -9,8 +9,7 @@ from feature_engineering import (
 from categorical_columns_handler import CategoricalHandlerFactory
 from outlier_detection import OutlierHandlerFactory
 from column_dropper import ColumnDropperFactory
-from strategies.data_splitter import DataSplitterFactory
-from utils.config import load_config
+from utils.config import ConfigLoader
 from utils.exception import CustomException
 from utils.logger import Logger
 
@@ -101,7 +100,7 @@ if __name__ == "__main__":
     # }
 
     # Load config from YAML
-    config = load_config()
+    config = ConfigLoader.load_config('config.yaml')
 
     # Set path of raw and processed data
     raw_data_path = config.get('raw_data_path', os.path.join('data', 'raw', 'data.csv'))
