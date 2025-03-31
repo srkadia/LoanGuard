@@ -9,28 +9,57 @@ from abc import ABC, abstractmethod
 import numpy as np
 import time
 
+
 class HyperparameterTuningStrategy(ABC):
     """
     Abstract base class for hyperparameter tuning strategies.
+
+    This class defines the interface for different hyperparameter tuning strategies.
     """
 
     @abstractmethod
     def tune(self, X_train, y_train):
         """
-        Run hyperparameter tuning.
+        Perform hyperparameter tuning on the model.
 
-        :param X_train: Training feature dataset.
-        :param y_train: Training target dataset.
-        :return: Best hyperparameters.
+        :param X_train: np.ndarray
+            The training feature dataset.
+
+        :param y_train: np.ndarray
+            The training target dataset.
+
+        :return: dict
+            A dictionary containing the best hyperparameters found during the tuning process.
         """
         pass
+
 
 class LightGBMTuning(HyperparameterTuningStrategy):
     """
     Hyperparameter tuning for LightGBM using Optuna.
+
+    This class implements the `HyperparameterTuningStrategy` interface, performing hyperparameter tuning for a LightGBM model.
     """
 
     def objective(self, trial, X_train, y_train):
+        """
+        Objective function to optimize the hyperparameters for LightGBM.
+
+        This method defines the hyperparameters to be tuned, splits the data into training and validation sets,
+        and trains a LightGBM model. The objective function returns the AUC score on the validation set.
+
+        :param trial: optuna.trial.Trial
+            The current Optuna trial, which provides access to the hyperparameter search space.
+
+        :param X_train: np.ndarray
+            The training feature dataset.
+
+        :param y_train: np.ndarray
+            The training target dataset.
+
+        :return: float
+            The AUC score of the model on the validation dataset, which will be used to guide the optimization process.
+        """
         params = {
             "boosting_type": "gbdt",
             "num_leaves": trial.suggest_int("num_leaves", 20, 150, step=10),
@@ -62,16 +91,52 @@ class LightGBMTuning(HyperparameterTuningStrategy):
         return model.best_score_["valid_0"]["auc"]
 
     def tune(self, X_train, y_train):
+        """
+        Tune the hyperparameters of the LightGBM model using Optuna.
+
+        This method uses the Optuna framework to search for the best hyperparameters for a LightGBM model.
+        The tuning process is done through a series of trials with different hyperparameter combinations.
+
+        :param X_train: np.ndarray
+            The training feature dataset.
+
+        :param y_train: np.ndarray
+            The training target dataset.
+
+        :return: dict
+            The best hyperparameters found after the tuning process.
+        """
         study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler())
         study.optimize(lambda trial: self.objective(trial, X_train, y_train), n_trials=20)
         return study.best_params
 
+
 class ANNTuning(HyperparameterTuningStrategy):
     """
-    Hyperparameter tuning for ANN using Optuna.
+    Hyperparameter tuning for an Artificial Neural Network (ANN) using Optuna.
+
+    This class implements the `HyperparameterTuningStrategy` interface and performs hyperparameter tuning for an ANN model.
     """
 
     def build_model(self, trial, input_dim, num_labels) -> tf.keras.models.Model:
+        """
+        Build a Keras model (ANN) with a given set of hyperparameters.
+
+        This method builds a neural network model using Keras with a number of layers, units,
+        dropout rates, and other parameters defined by the current Optuna trial.
+
+        :param trial: optuna.trial.Trial
+            The current Optuna trial, which provides access to the hyperparameter search space.
+
+        :param input_dim: int
+            The number of features in the input data.
+
+        :param num_labels: int
+            The number of output labels for the model (1 for binary classification).
+
+        :return: tf.keras.models.Model
+            A compiled Keras model ready for training.
+        """
         inp = tf.keras.layers.Input(shape=(input_dim,))
         x = tf.keras.layers.BatchNormalization()(inp)
         x = tf.keras.layers.Dropout(trial.suggest_float("dropout_1", 0.0, 0.5, step=0.1))(x)
@@ -84,7 +149,7 @@ class ANNTuning(HyperparameterTuningStrategy):
                 kernel_initializer="he_normal"
             )(x)
             x = tf.keras.layers.BatchNormalization()(x)
-            x = tf.keras.layers.Dropout(trial.suggest_float(f"dropout_{i+1}", 0.0, 0.5, step=0.1))(x)
+            x = tf.keras.layers.Dropout(trial.suggest_float(f"dropout_{i + 1}", 0.0, 0.5, step=0.1))(x)
 
         output_activation = "sigmoid" if num_labels == 1 else "softmax"
         x = tf.keras.layers.Dense(num_labels, activation=output_activation, dtype="float32")(x)
@@ -95,6 +160,24 @@ class ANNTuning(HyperparameterTuningStrategy):
         return model
 
     def objective(self, trial, X_train, y_train) -> float:
+        """
+        Objective function to optimize the hyperparameters for an Artificial Neural Network (ANN).
+
+        This method builds the neural network model, compiles it, and trains it using the hyperparameters
+        suggested by the Optuna trial. It returns the best AUC score on the validation set during training.
+
+        :param trial: optuna.trial.Trial
+            The current Optuna trial, which provides access to the hyperparameter search space.
+
+        :param X_train: np.ndarray
+            The training feature dataset.
+
+        :param y_train: np.ndarray
+            The training target dataset.
+
+        :return: float
+            The best AUC score achieved on the validation dataset during training.
+        """
         X_train = np.array(X_train).astype(np.float32)
         y_train = np.array(y_train).astype(np.float32)
 
@@ -126,6 +209,21 @@ class ANNTuning(HyperparameterTuningStrategy):
         return max(history.history["val_AUC"])
 
     def tune(self, X_train, y_train):
+        """
+        Tune the hyperparameters of the ANN model using Optuna.
+
+        This method uses the Optuna framework to search for the best hyperparameters for an ANN model.
+        The tuning process is done through a series of trials with different hyperparameter combinations.
+
+        :param X_train: np.ndarray
+            The training feature dataset.
+
+        :param y_train: np.ndarray
+            The training target dataset.
+
+        :return: dict
+            The best hyperparameters found after the tuning process.
+        """
         study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler())
         study.optimize(lambda trial: self.objective(trial, X_train, y_train), n_trials=20)
         return study.best_params

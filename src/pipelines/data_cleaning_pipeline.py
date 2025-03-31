@@ -1,14 +1,14 @@
 import os
 import pandas as pd
 
-from handle_missing_values import MissingValueHandlerFactory
-from feature_engineering import (
+from strategies.handle_missing_values import MissingValueHandlerFactory
+from strategies.feature_engineering import (
     NumericExtractorFactory, ZipCodeHandlerFactory,
     DateFeatureExtractorFactory, TargetEncoderFactory
 )
-from categorical_columns_handler import CategoricalHandlerFactory
-from outlier_detection import OutlierHandlerFactory
-from column_dropper import ColumnDropperFactory
+from strategies.categorical_columns_handler import CategoricalHandlerFactory
+from strategies.outlier_detection import OutlierHandlerFactory
+from strategies.column_dropper import ColumnDropperFactory
 from utils.config import ConfigLoader
 from utils.exception import CustomException
 from utils.logger import Logger
