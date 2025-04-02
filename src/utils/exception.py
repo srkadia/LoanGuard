@@ -10,11 +10,11 @@ class CustomException(Exception):
     Custom Exception class that logs errors with file name & line number automatically.
     """
 
-    def __init__(self, error: Exception):
+    def __init__(self, error: [Exception, str]):
         """
         Captures detailed error info and logs it automatically.
 
-        :param error: The caught exception object.
+        :param error: The caught exception object or a string message.
         """
         super().__init__(str(error))  # Convert exception object to string
         self.error_message = self.get_detailed_error(error)

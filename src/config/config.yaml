@@ -1,5 +1,7 @@
 raw_data_path: "data/raw/data.csv"
 processed_data_path: "data/processed/data_cleaned.csv"
+preprocessors_path: "artifacts/preprocessors"
+trained_model_path: "artifacts/ann_model.h5"
 
 columns_to_drop:
   - emp_title

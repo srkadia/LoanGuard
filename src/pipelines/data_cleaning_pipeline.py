@@ -1,4 +1,5 @@
 import os
+
 import pandas as pd
 
 from strategies.handle_missing_values import MissingValueHandlerFactory
@@ -22,15 +23,18 @@ class DataCleaningPipeline:
     The pipeline executes strategies in a configurable order to process raw data.
     """
 
-    def __init__(self, df: pd.DataFrame, config: dict):
+    def __init__(self, df: pd.DataFrame, config: dict, save_preprocessors: bool = True):
         """
         Initializes the data cleaning pipeline.
 
         :param df: The input DataFrame containing raw data.
         :param config: A dictionary specifying configurations for different strategies.
+        :param save_preprocessors: Whether to save preprocessing objects for later use.
         """
         self.df = df
         self.config = config
+        self.save_preprocessors = save_preprocessors
+        self.preprocessors = {}
 
     def apply_strategies(self):
         """
@@ -71,57 +75,57 @@ class DataCleaningPipeline:
             logger.error(f"Error applying {factory_class.__name__}: {e}")
         return self.df
 
-if __name__ == "__main__":
-    # # Define input and output file paths
-    # RAW_DATA_PATH = os.path.join('data', 'raw', 'data.csv')
-    # PROCESSED_DATA_PATH = os.path.join('data', 'processed', 'data_cleaned.csv')
-    #
-    # # Configuration settings for the pipeline
-    # config = {
-    #     'columns_to_drop': ['emp_title', 'emp_length', 'title', 'issue_d', 'grade'],
-    #     'numeric_transformations': [
-    #         {'column_name': 'term', 'pattern': r'(\d+)', 'default_value': 0},
-    #         {'column_name': 'int_rate', 'pattern': r'(\d+(\.\d+)?)', 'remove_chars': '%', 'default_value': 0},
-    #         {'column_name': 'revol_util', 'pattern': r'(\d+(\.\d+)?)', 'remove_chars': '%', 'default_value': 0}
-    #     ],
-    #     'outlier_cols': {
-    #         'annual_inc': 250000,
-    #         'dti': 50,
-    #         'open_acc': 40,
-    #         'total_acc': 80,
-    #         'revol_util': 120,
-    #         'revol_bal': 250000
-    #     },
-    #     'outlier_quantile': 0.95,
-    #     'date_columns': {'earliest_cr_line': '%b-%Y'},
-    #     'categorical_columns': ['sub_grade', 'verification_status', 'purpose', 'initial_list_status', 'application_type', 'home_ownership'],
-    #     'zip_code_column': 'address',
-    #     'columns_to_drop_additional': ['zip_code']
-    # }
-
-    # Load config from YAML
-    config = ConfigLoader.load_config('config.yaml')
-
-    # Set path of raw and processed data
-    raw_data_path = config.get('raw_data_path', os.path.join('data', 'raw', 'data.csv'))
-    processed_data_path = config.get('processed_data_path', os.path.join('data', 'processed', 'data_cleaned.csv'))
-
-    # Load raw data into a DataFrame
-    df = pd.read_csv(raw_data_path)
-
-    # Instantiate and execute the data cleaning pipeline
-    pipeline = DataCleaningPipeline(df, config)
-    df_cleaned = pipeline.apply_strategies()
-
-    # Extract numerical and categorical features for analysis
-    numerical_features = [feature for feature in df_cleaned.columns if df_cleaned[feature].dtype != 'O']
-    categorical_features = [feature for feature in df_cleaned.columns if df_cleaned[feature].dtype == 'O']
-
-    # Print feature details
-    print(f'We have {len(numerical_features)} numerical features : {numerical_features}')
-    print(f'\nWe have {len(categorical_features)} categorical features : {categorical_features}')
-    print(f'Cleaned data shape: {df_cleaned.shape}')
-
-    # Save the cleaned data to the processed file path
-    df_cleaned.to_csv(processed_data_path, index=False)
-    logger.info(f"Cleaned data saved to {processed_data_path}")
+# if __name__ == "__main__":
+#     # # Define input and output file paths
+#     # RAW_DATA_PATH = os.path.join('data', 'raw', 'data.csv')
+#     # PROCESSED_DATA_PATH = os.path.join('data', 'processed', 'data_cleaned.csv')
+#     #
+#     # # Configuration settings for the pipeline
+#     # config = {
+#     #     'columns_to_drop': ['emp_title', 'emp_length', 'title', 'issue_d', 'grade'],
+#     #     'numeric_transformations': [
+#     #         {'column_name': 'term', 'pattern': r'(\d+)', 'default_value': 0},
+#     #         {'column_name': 'int_rate', 'pattern': r'(\d+(\.\d+)?)', 'remove_chars': '%', 'default_value': 0},
+#     #         {'column_name': 'revol_util', 'pattern': r'(\d+(\.\d+)?)', 'remove_chars': '%', 'default_value': 0}
+#     #     ],
+#     #     'outlier_cols': {
+#     #         'annual_inc': 250000,
+#     #         'dti': 50,
+#     #         'open_acc': 40,
+#     #         'total_acc': 80,
+#     #         'revol_util': 120,
+#     #         'revol_bal': 250000
+#     #     },
+#     #     'outlier_quantile': 0.95,
+#     #     'date_columns': {'earliest_cr_line': '%b-%Y'},
+#     #     'categorical_columns': ['sub_grade', 'verification_status', 'purpose', 'initial_list_status', 'application_type', 'home_ownership'],
+#     #     'zip_code_column': 'address',
+#     #     'columns_to_drop_additional': ['zip_code']
+#     # }
+#
+#     # Load config from YAML
+#     config = ConfigLoader.load_config('config.yaml')
+#
+#     # Set path of raw and processed data
+#     raw_data_path = config.get('raw_data_path', os.path.join('data', 'raw', 'data.csv'))
+#     processed_data_path = config.get('processed_data_path', os.path.join('data', 'processed', 'data_cleaned_1.csv'))
+#
+#     # Load raw data into a DataFrame
+#     df = pd.read_csv(raw_data_path)
+#
+#     # Instantiate and execute the data cleaning pipeline
+#     pipeline = DataCleaningPipeline(df, config)
+#     df_cleaned = pipeline.apply_strategies()
+#
+#     # Extract numerical and categorical features for analysis
+#     numerical_features = [feature for feature in df_cleaned.columns if df_cleaned[feature].dtype != 'O']
+#     categorical_features = [feature for feature in df_cleaned.columns if df_cleaned[feature].dtype == 'O']
+#
+#     # Print feature details
+#     print(f'We have {len(numerical_features)} numerical features : {numerical_features}')
+#     print(f'\nWe have {len(categorical_features)} categorical features : {categorical_features}')
+#     print(f'Cleaned data shape: {df_cleaned.shape}')
+#
+#     # Save the cleaned data to the processed file path
+#     df_cleaned.to_csv(processed_data_path, index=False)
+#     logger.info(f"Cleaned data saved to {processed_data_path}")

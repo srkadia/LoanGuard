@@ -1,5 +1,7 @@
+import os
 import numpy as np
 import pandas as pd
+import tensorflow.keras.models
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from strategies.model_training import ModelTrainerFactory
 from strategies.hyperparameter_tuning import LightGBMTuning, ANNTuning
@@ -66,8 +68,22 @@ class ModelTrainingPipeline:
             logger.info(f"Initializing model training for: {self.model_type}")
 
             # Perform tuning first (if applicable)
-            if self.config.get("tune_hyperparameters", False):
-                self.tune_hyperparameters()
+            # if self.config.get("tune_hyperparameters", False):
+            #     self.tune_hyperparameters()
+
+            self.best_params = {
+                'dropout_1': 0.0,
+                'num_layers': 2,
+                'units_0': 64,
+                'units_1': 96,
+                'dropout_2': 0.0,
+                'learning_rate': 0.009576808483978131,
+                'validation_split': 0.2,
+                'epochs': 60,
+                'batch_size': 256,
+                'reduce_lr_factor': 0.6,
+                'reduce_lr_patience': 4
+            }
 
             # Get model trainer instance with best hyperparameters
             trainer = ModelTrainerFactory.get_trainer(self.model_type, self.best_params)
@@ -94,6 +110,10 @@ class ModelTrainingPipeline:
         logger.info("Evaluating the trained model...")
 
         try:
+            # Convert data to float32 for ANN training
+            self.X_train = np.array(self.X_train).astype(np.float32)
+            self.y_train = np.array(self.y_train).astype(np.float32)
+
             # Assuming that the trainer has a `predict` method for making predictions
             y_pred = trainer.predict(self.X_train)
             y_pred = np.round(y_pred).astype(int)  # For ANN, convert probabilities to binary labels
@@ -111,14 +131,15 @@ class ModelTrainingPipeline:
         """
         Saves the trained model to a file.
         """
+        saved_model_path = os.path.join("artifacts")
         logger.info(f"Saving the {model_type} model...")
 
         try:
             # Save the model using joblib or model-specific saving
             if model_type == "ann":
-                trainer.model.save(f"{model_type}_model.h5")
+                trainer.model.save(f"{saved_model_path+model_type}_model.h5")
             else:
-                dump(trainer.model, f"{model_type}_model.joblib")
+                dump(trainer.model, f"{saved_model_path+model_type}_model.joblib")
 
             logger.info(f"{model_type} model saved successfully.")
         except CustomException as e:
@@ -142,7 +163,7 @@ if __name__ == "__main__":
     # Select model type dynamically (can be parameterized)
     # model_types = config.get('model_type', ['lightgbm'])
     model_types = ['ann']
-    tune_hyperparameters = config.get("tune_hyperparameters", False)  # Enable/disable tuning via config
+    # tune_hyperparameters = config.get("tune_hyperparameters", False)  # Enable/disable tuning via config
 
     # Instantiate and execute the model training pipeline
     for model_type in model_types:
