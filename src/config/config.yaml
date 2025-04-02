@@ -60,3 +60,7 @@ model_type:
   - ann
 
 tune_hyperparameters: True
+
+mlflow_tracking_uri: http://127.0.0.1:5000
+
+mlflow_experiment_name: LoanGuard

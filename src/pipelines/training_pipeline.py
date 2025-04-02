@@ -1,6 +1,9 @@
 import os
 import numpy as np
 import pandas as pd
+import mlflow
+import mlflow.sklearn
+import mlflow.tensorflow
 import tensorflow.keras.models
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from strategies.model_training import ModelTrainerFactory
@@ -34,7 +37,11 @@ class ModelTrainingPipeline:
         self.X_train = X_train
         self.y_train = y_train
         self.config = config
-        self.best_params = None  # Stores best hyperparameters
+        self.best_params = None
+        mlflow.set_tracking_uri(self.config.get('mlflow_tracking_uri', 'http://127.0.0.1:5000'))
+        self.experiment_name = self.config.get('mlflow_experiment_name', 'LoanGuard')
+        mlflow.set_experiment(self.experiment_name)
+
 
     def tune_hyperparameters(self):
         """
@@ -65,40 +72,43 @@ class ModelTrainingPipeline:
         Trains the selected model using the best hyperparameters.
         """
         try:
-            logger.info(f"Initializing model training for: {self.model_type}")
+            with mlflow.start_run():
+                logger.info(f"Initializing model training for: {self.model_type}")
 
-            # Perform tuning first (if applicable)
-            # if self.config.get("tune_hyperparameters", False):
-            #     self.tune_hyperparameters()
+                # Perform tuning first (if applicable)
+                # if self.config.get("tune_hyperparameters", False):
+                #     self.tune_hyperparameters()
 
-            self.best_params = {
-                'dropout_1': 0.0,
-                'num_layers': 2,
-                'units_0': 64,
-                'units_1': 96,
-                'dropout_2': 0.0,
-                'learning_rate': 0.009576808483978131,
-                'validation_split': 0.2,
-                'epochs': 60,
-                'batch_size': 256,
-                'reduce_lr_factor': 0.6,
-                'reduce_lr_patience': 4
-            }
+                self.best_params = {
+                    'dropout_1': 0.0,
+                    'num_layers': 2,
+                    'units_0': 64,
+                    'units_1': 96,
+                    'dropout_2': 0.0,
+                    'learning_rate': 0.009576808483978131,
+                    'validation_split': 0.2,
+                    'epochs': 60,
+                    'batch_size': 256,
+                    'reduce_lr_factor': 0.6,
+                    'reduce_lr_patience': 4
+                }
 
-            # Get model trainer instance with best hyperparameters
-            trainer = ModelTrainerFactory.get_trainer(self.model_type, self.best_params)
+                # Get model trainer instance with best hyperparameters
+                trainer = ModelTrainerFactory.get_trainer(self.model_type, self.best_params)
 
-            # Train the model
-            trainer.train(self.X_train, self.y_train)
-            logger.info(f"{self.model_type} model training completed successfully.")
+                # Train the model
+                trainer.train(self.X_train, self.y_train)
+                logger.info(f"{self.model_type} model training completed.")
 
-            # Save the trained model
-            self.save_model(trainer, self.model_type)
+                # Save the trained model
+                self.save_model(trainer, self.model_type)
 
-            # Evaluate the model after training
-            self.evaluate_model(trainer)
+                # Evaluate the model after training
+                self.evaluate_model(trainer)
 
-            return trainer
+                mlflow.end_run()
+
+                return trainer
 
         except CustomException as e:
             logger.error(f"Error during {self.model_type} model training: {e}")
@@ -119,8 +129,9 @@ class ModelTrainingPipeline:
             y_pred = np.round(y_pred).astype(int)  # For ANN, convert probabilities to binary labels
 
             accuracy = accuracy_score(self.y_train, y_pred)
+            mlflow.log_metric("accuracy", accuracy)
             logger.info(f"Model accuracy: {accuracy}")
-            logger.info(f"Classification Report:\n{classification_report(self.y_train, y_pred)}")
+            mlflow.log_text(classification_report(self.y_train, y_pred), "classification_report.txt")
 
             # Optionally, print confusion matrix
             logger.info(f"Confusion Matrix:\n{confusion_matrix(self.y_train, y_pred)}")
@@ -137,9 +148,13 @@ class ModelTrainingPipeline:
         try:
             # Save the model using joblib or model-specific saving
             if model_type == "ann":
-                trainer.model.save(f"{saved_model_path+model_type}_model.h5")
+                model_path = f"{saved_model_path}/{model_type}_model.h5"
+                # trainer.model.save(model_path)
+                mlflow.tensorflow.log_model(trainer.model, "model")
             else:
-                dump(trainer.model, f"{saved_model_path+model_type}_model.joblib")
+                model_path = f"{saved_model_path}/{model_type}_model.joblib"
+                # dump(trainer.model, model_path)
+                mlflow.sklearn.log_model(trainer.model, "model")
 
             logger.info(f"{model_type} model saved successfully.")
         except CustomException as e:
@@ -149,14 +164,11 @@ if __name__ == "__main__":
     # Load config from YAML
     config = ConfigLoader.load_config('config.yaml')
 
-    # Define paths for input datasets
-    processed_data_path = config.get('processed_data_path')
-
     # Load training dataset
-    df_train = pd.read_csv(processed_data_path)
+    df_train = pd.read_csv(config.get('processed_data_path'))
 
     # Define features and target
-    target_column = config.get('target_column')  # Adjust based on your dataset
+    target_column = config.get('target_column')
     X_train = df_train.drop(columns=[target_column])
     y_train = df_train[target_column]
 
@@ -169,9 +181,10 @@ if __name__ == "__main__":
     for model_type in model_types:
         try:
             pipeline = ModelTrainingPipeline(model_type, X_train, y_train, config)
-            trained_model = pipeline.train_model()
-            logger.info(f"Model training pipeline executed successfully for {model_type}.")
+            pipeline.train_model()
+            logger.info(f"Training successful for {model_type}.")
         except Exception as e:
             logger.error(f"Skipping {model_type} due to error: {e}")
+            raise CustomException(e)
 
-    logger.info(f"Model training pipeline execution finished successfully!")
+    logger.info(f"Training pipeline completed!")

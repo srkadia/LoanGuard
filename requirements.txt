@@ -14,4 +14,10 @@ pyyaml
 optuna
 optuna-integration[tfkeras]
 joblib
+mlflow
+fastapi
+uvicorn
+pydantic
+python-dotenv
+gunicorn
 # -e .

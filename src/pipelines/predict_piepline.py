@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import mlflow
+import mlflow.tensorflow
 import tensorflow as tf
 
 from utils.config import ConfigLoader
@@ -26,8 +28,14 @@ class PredictPipeline:
         """
         self.user_input = user_input
         self.config = config
-        self.df_input = pd.DataFrame([self.user_input])  # Convert user input to DataFrame
-        self.model = None  # Placeholder for the model
+        self.df_input = pd.DataFrame([self.user_input])
+        self.model = None
+
+        # Initialize MLflow
+        mlflow.set_tracking_uri(self.config.get("mlflow_tracking_uri", "http://127.0.0.1:5000"))
+        self.experiment_name = self.config.get("mlflow_experiment_name", "LoanGuard")
+        mlflow.set_experiment(self.experiment_name)
+
 
     def load_model(self):
         """
@@ -38,6 +46,7 @@ class PredictPipeline:
         """
         model_path = self.config.get("trained_model_path", "artifacts/ann_model.h5")
         try:
+            mlflow.tensorflow.autolog()
             self.model = tf.keras.models.load_model(model_path)
             logger.info(f"Model successfully loaded from {model_path}")
         except FileNotFoundError as e:
@@ -60,9 +69,9 @@ class PredictPipeline:
         """
         try:
             logger.info("Transforming user input data...")
-            self.df_input = self._apply_transforms()
+            transformed_input = self._apply_transforms()
             logger.info("Transformation complete.")
-            return self.df_input
+            return transformed_input
         except Exception as e:
             error_message = f"Error transforming input data: {str(e)}"
             logger.error(error_message)
@@ -107,8 +116,7 @@ class PredictPipeline:
 
             # One-hot encode verification status
             for status in ["Source Verified", "Verified"]:
-                transformed_data[f"verification_status_{status.replace(' ', '_')}"] = True if self.user_input[
-                                                                                                  "verification_status"] == status else False
+                transformed_data[f"verification_status_{status.replace(' ', '_')}"] = True if self.user_input["verification_status"] == status else False
 
             # One-hot encode loan purpose
             purposes = ["credit_card", "debt_consolidation", "educational", "home_improvement", "house",
@@ -148,27 +156,28 @@ class PredictPipeline:
             np.array: The predicted result from the model.
         """
         try:
-            # Step 1: Load the model
-            logger.info("Starting pipeline...")
-            self.load_model()
+            with mlflow.start_run():
+                # Step 1: Load the model
+                logger.info("Starting pipeline...")
+                self.load_model()
 
-            # Step 2: Transform the user input
-            self.transform_input()
+                # Step 2: Transform the user input
+                transformed_input = self.transform_input()
+                transformed_input = np.array(transformed_input).astype(np.float32)
 
-            # Step 3: Make the prediction
-            logger.info("Making predictions...")
-            self.df_input = np.array(self.df_input).astype(np.float32)
-            prediction = np.round(self.model.predict(self.df_input)).astype(int)
-            # logger.info(f"Prediction result: {prediction}")
+                # Step 3: Log inputs to MLflow
+                mlflow.log_params(self.user_input)
 
-            return prediction
+                # Step 4: Make the prediction
+                prediction = np.round(self.model.predict(transformed_input)).astype(int)
 
-        except CustomException as ce:
-            logger.error(f"Custom Exception occurred: {str(ce)}")
-            raise ce
+                # Log Prediction
+                mlflow.log_metric("prediction", prediction[0][0])
+
+                return prediction
+
         except Exception as e:
-            error_message = f"Error during prediction pipeline: {str(e)}"
-            logger.error(error_message)
+            logger.error(f"Error in prediction pipeline: {str(e)}")
             raise CustomException(e)
 
 
@@ -209,9 +218,8 @@ if __name__ == "__main__":
         prediction = pipeline.run_pipeline()
 
         # Print the result
-        logger.info(f"Prediction result: {prediction[0]}")
+        logger.info(f"Prediction: {prediction[0][0]}")
 
-    except CustomException as ce:
-        logger.error(f"A custom exception occurred: {str(ce)}")
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")
+        raise CustomException(e)
