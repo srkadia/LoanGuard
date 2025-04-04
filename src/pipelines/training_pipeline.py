@@ -1,9 +1,11 @@
 import os
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 import mlflow
 import mlflow.sklearn
 import mlflow.tensorflow
+import seaborn as sns
 import tensorflow.keras.models
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from strategies.model_training import ModelTrainerFactory
@@ -16,175 +18,91 @@ from joblib import dump
 # Initialize Logger
 logger = Logger(__name__).get_logger()
 
-
 class ModelTrainingPipeline:
-    """
-    A pipeline that automates hyperparameter tuning, model training, and evaluation.
-    It selects a model dynamically, tunes it if necessary, trains it on the given data,
-    evaluates it, and saves the trained model for later use.
-    """
-
     def __init__(self, model_type: str, X_train: pd.DataFrame, y_train: pd.Series, config: dict):
-        """
-        Initializes the model training pipeline.
-
-        :param model_type: The type of model to train (e.g., 'lightgbm', 'ann').
-        :param X_train: Training features.
-        :param y_train: Training target labels.
-        :param config: Configuration settings for model parameters.
-        """
         self.model_type = model_type
         self.X_train = X_train
         self.y_train = y_train
         self.config = config
         self.best_params = None
-        mlflow.set_tracking_uri(self.config.get('mlflow_tracking_uri', 'http://127.0.0.1:5000'))
-        self.experiment_name = self.config.get('mlflow_experiment_name', 'LoanGuard')
-        mlflow.set_experiment(self.experiment_name)
+        self.model = None
 
+        # MLflow setup
+        mlflow.set_tracking_uri(self.config.get('mlflow_tracking_uri', 'http://mlflow_service:5000'))
+        mlflow.set_experiment(self.config.get('mlflow_experiment_name', 'LoanGuard'))
 
     def tune_hyperparameters(self):
-        """
-        Tunes the hyperparameters before training, if applicable.
-        """
-        logger.info(f"Starting hyperparameter tuning for {self.model_type}...")
-
+        logger.info(f"Hyperparameter tuning for {self.model_type}...")
         try:
-            if self.model_type == "lightgbm":
-                tuner = LightGBMTuning()
-                self.best_params = tuner.tune(self.X_train, self.y_train)
-
-            elif self.model_type == "ann":
-                # Convert data to float32 for ANN training
-                self.X_train = np.array(self.X_train).astype(np.float32)
-                self.y_train = np.array(self.y_train).astype(np.float32)
-
-                tuner = ANNTuning()
-                self.best_params = tuner.tune(self.X_train, self.y_train)
-
-            if self.best_params:
-                logger.info(f"Best hyperparameters found for {self.model_type}: {self.best_params}")
-        except CustomException as e:
-            logger.error(f"Error during hyperparameter tuning for {self.model_type}: {e}")
-
-    def train_model(self):
-        """
-        Trains the selected model using the best hyperparameters.
-        """
-        try:
-            with mlflow.start_run():
-                logger.info(f"Initializing model training for: {self.model_type}")
-
-                # Perform tuning first (if applicable)
-                # if self.config.get("tune_hyperparameters", False):
-                #     self.tune_hyperparameters()
-
-                self.best_params = {
-                    'dropout_1': 0.0,
-                    'num_layers': 2,
-                    'units_0': 64,
-                    'units_1': 96,
-                    'dropout_2': 0.0,
-                    'learning_rate': 0.009576808483978131,
-                    'validation_split': 0.2,
-                    'epochs': 60,
-                    'batch_size': 256,
-                    'reduce_lr_factor': 0.6,
-                    'reduce_lr_patience': 4
-                }
-
-                # Get model trainer instance with best hyperparameters
-                trainer = ModelTrainerFactory.get_trainer(self.model_type, self.best_params)
-
-                # Train the model
-                trainer.train(self.X_train, self.y_train)
-                logger.info(f"{self.model_type} model training completed.")
-
-                # Save the trained model
-                self.save_model(trainer, self.model_type)
-
-                # Evaluate the model after training
-                self.evaluate_model(trainer)
-
-                mlflow.end_run()
-
-                return trainer
-
-        except CustomException as e:
-            logger.error(f"Error during {self.model_type} model training: {e}")
-
-    def evaluate_model(self, trainer):
-        """
-        Evaluates the model after training using metrics like accuracy and AUC.
-        """
-        logger.info("Evaluating the trained model...")
-
-        try:
-            # Convert data to float32 for ANN training
+            tuner = LightGBMTuning() if self.model_type == "lightgbm" else ANNTuning()
             self.X_train = np.array(self.X_train).astype(np.float32)
             self.y_train = np.array(self.y_train).astype(np.float32)
+            self.best_params = tuner.tune(self.X_train, self.y_train)
+            logger.info(f"Best parameters: {self.best_params}")
+        except Exception as e:
+            raise CustomException(f"Tuning failed: {e}")
 
-            # Assuming that the trainer has a `predict` method for making predictions
-            y_pred = trainer.predict(self.X_train)
-            y_pred = np.round(y_pred).astype(int)  # For ANN, convert probabilities to binary labels
+    def train_model(self):
+        try:
+            with mlflow.start_run():
+                logger.info(f"Training {self.model_type} model...")
+                trainer = ModelTrainerFactory.get_trainer(self.model_type, self.best_params or {})
+                trainer.train(self.X_train, self.y_train)
+                mlflow.log_params(self.best_params or {})
+                self.evaluate_model(trainer)
+                self.save_model()
+        except Exception as e:
+            raise CustomException(f"Training failed: {e}")
 
+    def evaluate_model(self, trainer):
+        try:
+            y_pred = np.round(trainer.predict(self.X_train)).astype(int)
             accuracy = accuracy_score(self.y_train, y_pred)
             mlflow.log_metric("accuracy", accuracy)
-            logger.info(f"Model accuracy: {accuracy}")
             mlflow.log_text(classification_report(self.y_train, y_pred), "classification_report.txt")
+            self.log_confusion_matrix(y_pred)
+            logger.info(f"Accuracy: {accuracy}")
+        except Exception as e:
+            raise CustomException(f"Evaluation failed: {e}")
 
-            # Optionally, print confusion matrix
-            logger.info(f"Confusion Matrix:\n{confusion_matrix(self.y_train, y_pred)}")
-        except CustomException as e:
-            logger.error(f"Error during model evaluation: {e}")
+    def log_confusion_matrix(self, y_pred):
+        cm = confusion_matrix(self.y_train, y_pred)
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+        plt.xlabel("Predicted")
+        plt.ylabel("True")
+        plt.title("Confusion Matrix")
+        cm_path = "artifacts/confusion_matrix.png"
+        plt.savefig(cm_path)
+        mlflow.log_artifact(cm_path)
+        plt.close()
 
-    def save_model(self, trainer, model_type: str):
-        """
-        Saves the trained model to a file.
-        """
-        saved_model_path = os.path.join("artifacts")
-        logger.info(f"Saving the {model_type} model...")
-
+    def save_model(self):
         try:
-            # Save the model using joblib or model-specific saving
-            if model_type == "ann":
-                model_path = f"{saved_model_path}/{model_type}_model.h5"
-                # trainer.model.save(model_path)
-                mlflow.tensorflow.log_model(trainer.model, "model")
+            os.makedirs("artifacts", exist_ok=True)
+            model_path = f"artifacts/{self.model_type}_model"
+            if self.model_type == "ann":
+                self.model.save(f"{model_path}.h5")
+                mlflow.tensorflow.log_model(self.model, "model")
             else:
-                model_path = f"{saved_model_path}/{model_type}_model.joblib"
-                # dump(trainer.model, model_path)
-                mlflow.sklearn.log_model(trainer.model, "model")
-
-            logger.info(f"{model_type} model saved successfully.")
-        except CustomException as e:
-            logger.error(f"Error saving the model: {e}")
+                dump(self.model, f"{model_path}.joblib")
+                mlflow.sklearn.log_model(self.model, "model")
+            logger.info(f"Model saved: {model_path}")
+        except Exception as e:
+            raise CustomException(f"Model saving failed: {e}")
 
 if __name__ == "__main__":
-    # Load config from YAML
     config = ConfigLoader.load_config('config.yaml')
-
-    # Load training dataset
     df_train = pd.read_csv(config.get('processed_data_path'))
-
-    # Define features and target
     target_column = config.get('target_column')
     X_train = df_train.drop(columns=[target_column])
     y_train = df_train[target_column]
+    model_types = config.get('model_type', ['lightgbm'])
 
-    # Select model type dynamically (can be parameterized)
-    # model_types = config.get('model_type', ['lightgbm'])
-    model_types = ['ann']
-    # tune_hyperparameters = config.get("tune_hyperparameters", False)  # Enable/disable tuning via config
-
-    # Instantiate and execute the model training pipeline
     for model_type in model_types:
         try:
             pipeline = ModelTrainingPipeline(model_type, X_train, y_train, config)
             pipeline.train_model()
-            logger.info(f"Training successful for {model_type}.")
+            logger.info(f"{model_type} training completed.")
         except Exception as e:
-            logger.error(f"Skipping {model_type} due to error: {e}")
-            raise CustomException(e)
-
-    logger.info(f"Training pipeline completed!")
+            raise CustomException(f"{model_type} training failed: {e}")

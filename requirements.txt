@@ -18,6 +18,5 @@ mlflow
 fastapi
 uvicorn
 pydantic
-python-dotenv
-gunicorn
+starlette
 # -e .

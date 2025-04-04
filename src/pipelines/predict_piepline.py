@@ -172,7 +172,9 @@ class PredictPipeline:
                 prediction = np.round(self.model.predict(transformed_input)).astype(int)
 
                 # Log Prediction
-                mlflow.log_metric("prediction", prediction[0][0])
+                mlflow.log_metric("prediction", prediction)
+
+                mlflow.end_run()
 
                 return prediction
 

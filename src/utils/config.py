@@ -7,8 +7,6 @@ class ConfigLoader:
     """
     Utility class to load YAML configuration files dynamically from the config directory.
     """
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    CONFIG_DIR = os.path.join(BASE_DIR, "..", "config")
 
     @staticmethod
     def load_config(filename: str):
@@ -18,7 +16,7 @@ class ConfigLoader:
         :param filename: Name of the YAML file to load (e.g., 'config.yaml').
         :return: Dictionary containing configuration settings.
         """
-        config_path = os.path.join(ConfigLoader.CONFIG_DIR, filename)
+        config_path = os.path.join(filename)
 
         try:
             if not os.path.exists(config_path):
@@ -33,4 +31,4 @@ class ConfigLoader:
 # Example Usage
 # if __name__ == "__main__":
 #     config = ConfigLoader.load_config("config.yaml")
-#     print(config, params, sep='\n')
+#     print(config)
