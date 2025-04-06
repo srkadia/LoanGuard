@@ -92,7 +92,8 @@ class ModelTrainingPipeline:
             raise CustomException(f"Model saving failed: {e}")
 
 if __name__ == "__main__":
-    config = ConfigLoader.load_config('config.yaml')
+    CONFIG_FILE_PATH = os.path.abspath(os.path.join("config.yaml"))
+    config = ConfigLoader.load_config(CONFIG_FILE_PATH)
     df_train = pd.read_csv(config.get('processed_data_path'))
     target_column = config.get('target_column')
     X_train = df_train.drop(columns=[target_column])

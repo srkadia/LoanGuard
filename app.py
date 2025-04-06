@@ -1,8 +1,13 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pipelines.predict_piepline import PredictPipeline
 from utils.config import ConfigLoader
+from utils.logger import Logger
+
+# Initialize Logger
+logger = Logger(__name__).get_logger()
 
 app = FastAPI()
 app.add_middleware(
@@ -42,15 +47,18 @@ async def predict(input_data: LoanApplication):
     try:
         # Convert Pydantic model to dictionary
         user_input = input_data.model_dump()
-        print(user_input)
+        logger.info(user_input)
 
         # Load config and run pipeline
-        config = ConfigLoader.load_config("config.yaml")
+        config_file_path = os.path.abspath("config.yaml")
+        config = ConfigLoader.load_config(config_file_path)
         pipeline = PredictPipeline(user_input, config)
         prediction = pipeline.run_pipeline().tolist()
+        logger.info("Prediction: " + str(prediction[0][0]))
 
         return {"prediction": prediction[0][0]}
     except Exception as e:
+        logger.error(HTTPException(status_code=500, detail=str(e)))
         raise HTTPException(status_code=500, detail=str(e))
 
 

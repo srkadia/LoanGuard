@@ -30,5 +30,5 @@ class ConfigLoader:
 
 # Example Usage
 # if __name__ == "__main__":
-#     config = ConfigLoader.load_config("config.yaml")
+#     config = ConfigLoader.load_config("../../config.yaml")
 #     print(config)

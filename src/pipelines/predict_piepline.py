@@ -1,9 +1,13 @@
+import os.path
+
 import numpy as np
 import pandas as pd
 import mlflow
+import mlflow.pyfunc
 import mlflow.tensorflow
 import tensorflow as tf
 
+from mlflow.exceptions import MlflowException
 from utils.config import ConfigLoader
 from utils.exception import CustomException
 from utils.logger import Logger
@@ -57,6 +61,37 @@ class PredictPipeline:
             error_message = f"Error loading model: {str(e)}"
             logger.error(error_message)
             raise CustomException(e)
+
+    def load_registered_model(self, model_name: str = "ANN_Model", model_version: str = "1"):
+        """
+        Loads the trained model from the MLflow registry based on the provided model name and version.
+
+        :param model_name: The name of the model in the MLflow registry.
+        :param model_version: The version of the model to load.
+
+        :returns: The loaded model.
+        """
+        model_uri = f"models:/{model_name}/{model_version}"
+
+        try:
+            # Log the model loading attempt
+            logger.info(f"Attempting to load model: {model_name}, version: {model_version}")
+
+            # Load the model from MLflow
+            self.model = mlflow.pyfunc.load_model(model_uri)
+
+            logger.info(f"Model {model_name} version {model_version} loaded successfully.")
+
+            return self.model
+        except MlflowException as e:
+            error_message = f"Error loading model: {model_name} version {model_version} from the MLflow registry."
+            logger.error(error_message)
+            raise CustomException(error_message) from e
+
+        except Exception as e:
+            error_message = f"Unexpected error while loading model: {model_name} version {model_version}. Error: {str(e)}"
+            logger.error(error_message)
+            raise CustomException(error_message) from e
 
     def transform_input(self) -> pd.DataFrame:
         """
@@ -159,7 +194,8 @@ class PredictPipeline:
             with mlflow.start_run():
                 # Step 1: Load the model
                 logger.info("Starting pipeline...")
-                self.load_model()
+                # self.load_model()
+                self.load_registered_model()
 
                 # Step 2: Transform the user input
                 transformed_input = self.transform_input()
@@ -186,7 +222,8 @@ class PredictPipeline:
 if __name__ == "__main__":
     try:
         # Load the config from the YAML
-        config = ConfigLoader.load_config('config.yaml')
+        CONFIG_FILE_PATH = os.path.abspath(os.path.join("config.yaml"))
+        config = ConfigLoader.load_config(CONFIG_FILE_PATH)
 
         # Get user inputs (for now, we just hardcode it)
         user_input = {
