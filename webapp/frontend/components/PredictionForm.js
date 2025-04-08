@@ -150,7 +150,17 @@ export default function PredictionForm() {
                 </form>
                 {prediction !== null && (
                     <div className="mt-6 p-4 text-center bg-gray-800 border border-gray-600 rounded-md shadow-md">
-                        <p className="text-xl text-green-400">Prediction: <span className="font-bold">{prediction}</span></p>
+                        <p className="text-xl text-green-400">
+                            Prediction:
+                            <span className="font-bold">
+                                {prediction === 0
+                                    ? ' Loan will be fully paid'
+                                    : prediction === 1
+                                    ? ' Loan will be charged off/defaulted'
+                                    : ' Unknown prediction'
+                                }
+                            </span>
+                        </p>
                     </div>
                 )}
             </div>

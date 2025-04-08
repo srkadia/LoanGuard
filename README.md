@@ -1,43 +1,110 @@
-# LoanGuard: AI-Powered Loan Default Prediction
+# 💼 LoanGuard: AI-Powered Loan Default Prediction
 
-## 🚀 Project Overview
-LoanGuard is an end-to-end **machine learning application** designed to predict loan defaulters using **Lending Club loan data**. The system is built using Python for data processing, ML modeling, and a REST API, while a React.js frontend provides a user-friendly interface. The project is **fully deployable** and follows industry best practices.
+LoanGuard is an end-to-end **machine learning system** that predicts the likelihood of loan default using real-world data from Lending Club. The application is designed for scalability, interpretability, and real-time usage—making it suitable for both demos and production environments.
 
-## 🎯 Key Features
-- **Predict Loan Default Risk**: Users can enter loan details and get real-time predictions.
-- **Machine Learning Pipeline**: Uses advanced classification models such as Logistic Regression, Random Forest, and XGBoost.
-- **Frontend UI**: Interactive React-based dashboard for input and results visualization.
-- **API Integration**: FastAPI/Flask-based backend serves predictions via REST API.
-- **Deployment Ready**: Docker, Heroku, AWS/GCP deployment options.
+Built with **FastAPI, Docker, MLflow**, and a **React.js** frontend, the system is deployable on cloud platforms like **AWS EC2**, and follows best practices in MLOps and ML engineering.
 
-## 📊 Dataset Details
-- **Source**: Lending Club Loan Dataset (from Kaggle/UCI Repository)
-- **Target Variable**: `loan_status` (Default or Not Default)
-- **Key Features**:
-  - Loan amount, interest rate, employment length
-  - Annual income, debt-to-income ratio (DTI)
-  - Credit history, late payments, open credit lines
+---
 
+## 🚀 Project Highlights
+
+- 🔍 **Loan Default Prediction**: Real-time risk prediction using loan application inputs.
+- 🧠 **ML Models**: Neural Networks, XGBoost, Random Forest, Logistic Regression.
+- 🧪 **MLOps Integration**: Full lifecycle tracking via MLflow, hyperparameter tuning with Optuna.
+- 🧱 **Modular ML Pipelines**: Clean, reusable code structure for preprocessing, training, and inference.
+- ⚡ **REST API**: FastAPI-powered backend for quick inference and model versioning.
+- 🖥️ **Interactive UI**: Built with React.js for seamless user interaction.
+- 📦 **Dockerized Deployment**: Easy containerization for local or cloud use.
+- ☁️ **Cloud-Ready**: Deployed and tested on AWS EC2.
+
+---
+
+## 📊 Dataset Overview
+
+- **Source**: Lending Club Loan Dataset (Kaggle/UCI)
+- **Target Variable**: `loan_status` (binary: Default or Not Default)
+- **Features Used**:
+  - Loan amount, interest rate, term, purpose
+  - Employment length, annual income, DTI
+  - Credit history length, delinquency, open accounts, revolving balance
+
+---
 
 ## 🔬 Data Preprocessing & Feature Engineering
 
-
-## 🧠 Machine Learning Models Used
-
-
-## ⚡ API Endpoints
-
-
-## 🎨 Frontend (React.js)
-
-
-## 🤝 Contributing
-Contributions are welcome! If you’d like to improve the project, feel free to open a pull request.
-
-
-## 📬 Contact
-- **Email**: srkkadia@gmail.com
-- **LinkedIn**: [srkadia](https://linkedin.com/in/srkadia)
-- **GitHub**: [srkkadia](https://github.com/srkadia)
+- Missing value imputation using median/mode strategies
+- Feature scaling via StandardScaler / MinMaxScaler
+- Categorical encoding using One-Hot and Ordinal Encoders
+- Derived features: credit-to-income ratio, loan-to-income ratio, etc.
+- Train/Validation/Test split for robust evaluation
 
 ---
+
+## 🧠 Machine Learning Models
+
+The system supports multiple models for experimentation and benchmarking:
+
+- ✅ Neural Network Classifier (built with PyTorch/Sklearn)
+- 🌲 Random Forest
+- 📈 Logistic Regression
+- ⚡ XGBoost Classifier
+
+**Optimization**:
+- Hyperparameter tuning with **Optuna**
+- Experiment tracking with **MLflow**
+- Model versioning and artifact logging
+
+---
+
+## ⚙️ API Endpoints (FastAPI)
+
+| Endpoint          | Method | Description |
+|-------------------|--------|-------------|
+| `/predict`        | POST   | Returns default risk prediction from input JSON |
+---
+
+## 🖥️ Frontend (React.js)
+
+- Clean dashboard to input loan application data
+- Real-time response from FastAPI backend
+- Displays prediction and model confidence score
+- UI built with modern component libraries and hooks
+
+---
+
+## 🚢 Deployment
+
+- **Containerized** using Docker and Docker Compose
+- **Cloud Deployment** on AWS EC2 (tested), GCP, or Heroku
+- Optional use of Nginx for API + UI reverse proxy
+- MLOps support with MLflow Tracking Server and local SQLite/remote S3 backend
+
+---
+
+## 🛠 Tech Stack
+
+- **Backend**: Python, FastAPI, MLflow, Optuna
+- **ML**: Scikit-learn, Tensorflow, PyTorch
+- **Frontend**: Next.js, Axios, Tailwind CSS
+- **Deployment**: Docker (dev branch), AWS EC2
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! If you’d like to improve the project—whether it's new models, UI improvements, or backend optimization—feel free to open a pull request or create an issue.
+
+---
+
+## 📬 Contact
+
+- **Email**: srkkadia@gmail.com  
+- **LinkedIn**: [srkadia](https://linkedin.com/in/srkadia)  
+- **GitHub**: [srkadia](https://github.com/srkadia)
+
+---
+
+## 📎 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
