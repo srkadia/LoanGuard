@@ -8,6 +8,10 @@
       <excludeFolder url="file://$MODULE_DIR$/notebooks/catboost_info" />
       <excludeFolder url="file://$MODULE_DIR$/src/loanguard.egg-info" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
+      <excludeFolder url="file://$MODULE_DIR$/catboost_info" />
+      <excludeFolder url="file://$MODULE_DIR$/mlruns" />
+      <excludeFolder url="file://$MODULE_DIR$/webapp/frontend/.next" />
+      <excludeFolder url="file://$MODULE_DIR$/webapp/frontend/node_modules" />
     </content>
     <orderEntry type="jdk" jdkName="C:\Users\Shrey Kadia\Desktop\pros\LoanGuard\venv" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

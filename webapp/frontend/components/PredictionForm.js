@@ -39,7 +39,8 @@ export default function PredictionForm() {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await axios.post("http://127.0.0.1:8000/predict", formData);
+            const API_URL = process.env.NEXT_PUBLIC_API_URL;
+            const response = await axios.post(`${API_URL}/predict`, formData);
             setPrediction(response.data.prediction);
         } catch (error) {
             console.error("Prediction Error: ", error);
@@ -150,7 +151,17 @@ export default function PredictionForm() {
                 </form>
                 {prediction !== null && (
                     <div className="mt-6 p-4 text-center bg-gray-800 border border-gray-600 rounded-md shadow-md">
-                        <p className="text-xl text-green-400">Prediction: <span className="font-bold">{prediction}</span></p>
+                        <p className="text-xl text-green-400">
+                            Prediction:
+                            <span className="font-bold">
+                                {prediction === 0
+                                    ? ' Loan will be fully paid'
+                                    : prediction === 1
+                                    ? ' Loan will be charged off/defaulted'
+                                    : ' Unknown prediction'
+                                }
+                            </span>
+                        </p>
                     </div>
                 )}
             </div>

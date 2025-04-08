@@ -1,0 +1,22 @@
+FROM python:3.8.20-slim
+
+# Set work directory
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Expose the FastAPI port
+EXPOSE 8000
+
+# COPY ./data /app/data
+# COPY ./src /app/
+
+COPY . .
+
+# Set Python path (ensure your code is under /app/src)
+ENV PYTHONPATH=/app/src
+
+# Command to run the app
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,0 +1,45 @@
+services:
+  backend:
+    image: loanguard-backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: loan_guard_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - mlflow_db:/app/mlflow
+      - artifacts:/app/artifacts
+    depends_on:
+      - mlflow
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_EXPERIMENT_NAME: LoanGuard
+
+  frontend:
+    image: loanguard-frontend:latest
+    build:
+      context: ./webapp/frontend
+      dockerfile: Dockerfile.frontend
+    container_name: loan_guard_frontend
+    ports:
+      - "3000:3000"
+
+  mlflow:
+    image: loanguard-mlflow:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.mlflow
+    container_name: mlflow_server
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_db:/app/mlflow
+      - artifacts:/app/artifacts
+    environment:
+      BACKEND_STORE_URI: sqlite:///app/mlflow/mlflow.db
+      ARTIFACT_ROOT: /app/artifacts
+
+volumes:
+  mlflow_db:
+  artifacts:
