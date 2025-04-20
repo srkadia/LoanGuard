@@ -2,7 +2,7 @@
 
 LoanGuard is an end-to-end **machine learning system** that predicts the likelihood of loan default using real-world data from Lending Club. The application is designed for scalability, interpretability, and real-time usage—making it suitable for both demos and production environments.
 
-Built with **FastAPI, Docker, MLflow**, and a **React.js** frontend, the system is deployable on cloud platforms like **AWS EC2**, and follows best practices in MLOps and ML engineering.
+Built with **FastAPI, Docker, MLflow**, and a **Next.js** frontend, the system is deployable on cloud platforms like **AWS EC2**, and follows best practices in MLOps and ML engineering.
 
 ---
 
@@ -13,7 +13,7 @@ Built with **FastAPI, Docker, MLflow**, and a **React.js** frontend, the system 
 - 🧪 **MLOps Integration**: Full lifecycle tracking via MLflow, hyperparameter tuning with Optuna.
 - 🧱 **Modular ML Pipelines**: Clean, reusable code structure for preprocessing, training, and inference.
 - ⚡ **REST API**: FastAPI-powered backend for quick inference and model versioning.
-- 🖥️ **Interactive UI**: Built with React.js for seamless user interaction.
+- 🖥️ **Interactive UI**: Built with Next.js for seamless user interaction.
 - 📦 **Dockerized Deployment**: Easy containerization for local or cloud use.
 - ☁️ **Cloud-Ready**: Deployed and tested on AWS EC2.
 
@@ -63,7 +63,7 @@ The system supports multiple models for experimentation and benchmarking:
 | `/predict`        | POST   | Returns default risk prediction from input JSON |
 ---
 
-## 🖥️ Frontend (React.js)
+## 🖥️ Frontend (Next.js)
 
 - Clean dashboard to input loan application data
 - Real-time response from FastAPI backend
