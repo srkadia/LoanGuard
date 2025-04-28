@@ -14,8 +14,7 @@ Built with **FastAPI, Docker, MLflow**, and a **Next.js** frontend, the system i
 - 🧱 **Modular ML Pipelines**: Clean, reusable code structure for preprocessing, training, and inference.
 - ⚡ **REST API**: FastAPI-powered backend for quick inference and model versioning.
 - 🖥️ **Interactive UI**: Built with Next.js for seamless user interaction.
-- 📦 **Dockerized Deployment**: Easy containerization for local or cloud use.
-- ☁️ **Cloud-Ready**: Deployed and tested on AWS EC2.
+- 📦 **Dockerized Deployment(Dev Branch)**: Easy containerization for local or cloud use.
 
 ---
 
@@ -86,7 +85,7 @@ The system supports multiple models for experimentation and benchmarking:
 - **Backend**: Python, FastAPI, MLflow, Optuna
 - **ML**: Scikit-learn, Tensorflow, PyTorch
 - **Frontend**: Next.js, Axios, Tailwind CSS
-- **Deployment**: Docker (dev branch), AWS EC2
+- **Deployment**: Docker (dev branch), AWS EC2 (tested)
 
 ---
 
